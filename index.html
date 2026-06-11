@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Env Var Checker</title>
+<style>
+:root {
+  --bg: #0a1424;
+  --panel: #0f1d34;
+  --panel-2: #142540;
+  --steel: #4a5870;
+  --steel-2: #708090;
+  --ink: #d8e0ec;
+  --ink-soft: #8898b0;
+  --rule: #2a3850;
+  --emerald: #4cc080;
+  --emerald-deep: #6dd098;
+  --emerald-dim: #3a8060;
+  --amber: #e8b440;
+  --red: #e06860;
+  --code-bg: #060c18;
+  --pass: rgba(76, 192, 128, 0.1);
+  --fail: rgba(224, 104, 96, 0.1);
+  --warn-bg: rgba(232, 180, 64, 0.1);
+}
+[data-theme="light"] {
+  --bg: #eef2f6;
+  --panel: #ffffff;
+  --panel-2: #f4f8fc;
+  --steel: #5a6878;
+  --steel-2: #788090;
+  --ink: #0a1424;
+  --ink-soft: #5a6878;
+  --rule: #c8d4e0;
+  --emerald: #2a8c5a;
+  --emerald-deep: #1a6e44;
+  --emerald-dim: #6aaa88;
+  --amber: #8a5800;
+  --red: #8b1a1a;
+  --code-bg: #f4f8fc;
+  --pass: #e0f4e8;
+  --fail: #f8e0dc;
+  --warn-bg: #faf0d4;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  padding: 1.75rem 1rem;
+  line-height: 1.55;
+}
+.wrap { max-width: 1200px; margin: 0 auto; }
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid var(--emerald);
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--emerald);
+}
+.subtitle {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  margin-top: 0.25rem;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  letter-spacing: 0.04em;
+}
+.theme-btn {
+  background: transparent;
+  border: 1px solid var(--rule);
+  color: var(--ink-soft);
+  padding: 0.4rem 0.85rem;
+  font-size: 0.78rem;
+  font-family: inherit;
+  cursor: pointer;
+  border-radius: 2px;
+}
+.theme-btn:hover { border-color: var(--emerald); color: var(--emerald); }
+.lede {
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+  max-width: 70ch;
+}
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+.input-panel {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  padding: 1.25rem;
+  border-radius: 3px;
+}
+.input-panel h2 {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--emerald);
+  margin-bottom: 0.85rem;
+  font-weight: 700;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--rule);
+}
+textarea {
+  width: 100%;
+  background: var(--code-bg);
+  border: 1px solid var(--rule);
+  color: var(--ink);
+  padding: 0.85rem;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  resize: vertical;
+  min-height: 240px;
+  border-radius: 2px;
+}
+textarea:focus { outline: 2px solid var(--emerald); outline-offset: 1px; }
+.btn-row {
+  display: flex;
+  gap: 0.65rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+button {
+  font-family: inherit;
+  font-size: 0.82rem;
+  padding: 0.55rem 1.25rem;
+  border: 1px solid var(--rule);
+  background: var(--panel);
+  color: var(--ink);
+  cursor: pointer;
+  border-radius: 2px;
+}
+button.primary {
+  background: var(--emerald);
+  border-color: var(--emerald);
+  color: var(--bg);
+  font-weight: 700;
+}
+[data-theme="dark"] button.primary {
+  color: var(--bg) !important;
+}
+button.primary:hover { background: var(--emerald-deep); }
+button:hover { border-color: var(--emerald); }
+.results { display: none; }
+.results.show { display: block; }
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1.5rem;
+}
+.summary-cell {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  padding: 0.85rem;
+  border-radius: 2px;
+  border-left: 3px solid var(--emerald);
+}
+.summary-cell.fail { border-left-color: var(--red); }
+.summary-cell.warn { border-left-color: var(--amber); }
+.summary-num {
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-family: ui-monospace, monospace;
+  color: var(--emerald-deep);
+}
+.summary-cell.fail .summary-num { color: var(--red); }
+.summary-cell.warn .summary-num { color: var(--amber); }
+.summary-cell.zero .summary-num { color: var(--ink-soft); }
+.summary-label {
+  font-size: 0.7rem;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 0.25rem;
+}
+.section {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+  border-radius: 3px;
+}
+.section h2 {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--emerald);
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--rule);
+  font-weight: 700;
+}
+.issue-list {
+  list-style: none;
+  padding: 0;
+}
+.issue-list li {
+  padding: 0.65rem 0.85rem;
+  margin-bottom: 0.4rem;
+  border-radius: 2px;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.85rem;
+  border-left: 3px solid var(--rule);
+  background: var(--panel-2);
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+}
+.issue-list li.fail { border-left-color: var(--red); background: var(--fail); }
+.issue-list li.warn { border-left-color: var(--amber); background: var(--warn-bg); }
+.issue-list li.ok { border-left-color: var(--emerald); background: var(--pass); }
+.issue-tag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.15rem 0.45rem;
+  border-radius: 2px;
+  flex-shrink: 0;
+  font-family: inherit;
+}
+.issue-list li.fail .issue-tag { background: var(--red); color: var(--bg); }
+.issue-list li.warn .issue-tag { background: var(--amber); color: var(--bg); }
+.issue-list li.ok .issue-tag { background: var(--emerald); color: var(--bg); }
+[data-theme="dark"] .issue-list li.fail .issue-tag,
+[data-theme="dark"] .issue-list li.warn .issue-tag,
+[data-theme="dark"] .issue-list li.ok .issue-tag { color: var(--bg) !important; }
+.issue-content { flex: 1; }
+.issue-key {
+  font-weight: 700;
+  color: var(--ink);
+}
+.issue-msg {
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  margin-top: 0.2rem;
+  font-family: ui-sans-serif, sans-serif;
+}
+.empty {
+  color: var(--ink-soft);
+  font-style: italic;
+  padding: 0.85rem;
+  font-family: ui-sans-serif, sans-serif;
+}
+.error-msg {
+  background: var(--code-bg);
+  border-left: 3px solid var(--red);
+  padding: 0.85rem 1rem;
+  border-radius: 2px;
+  font-size: 0.85rem;
+  color: var(--red);
+  margin-top: 0.85rem;
+}
+footer {
+  margin-top: 2.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+}
+footer a { color: var(--emerald); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+@media (max-width: 800px) {
+  body { padding: 1rem 0.75rem; }
+  h1 { font-size: 1.2rem; }
+  .layout { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>Env Var Checker</h1>
+    <div class="subtitle">// compare .env.example vs .env, detect leaked secrets and missing vars</div>
+  </div>
+  <button class="theme-btn" id="theme-toggle" type="button">Light</button>
+</header>
+
+<p class="lede">Paste your <code>.env.example</code> and your actual <code>.env</code>. The tool reports what's missing, what's extra, and what looks like a real secret committed to <code>.env.example</code>. Heuristics flag values that look like API keys, JWTs, private keys, or production-shaped credentials. Browser only.</p>
+
+<div class="layout">
+  <div class="input-panel">
+    <h2>.env.example (committed reference)</h2>
+    <textarea id="example-input" placeholder="DATABASE_URL=postgres://user:password@localhost:5432/mydb
+API_KEY=your-api-key-here
+LOG_LEVEL=info" spellcheck="false"></textarea>
+  </div>
+  <div class="input-panel">
+    <h2>.env (your actual file)</h2>
+    <textarea id="actual-input" placeholder="DATABASE_URL=postgres://app:secret123@db.prod:5432/myapp
+API_KEY=sk-ant-real-key-here
+LOG_LEVEL=debug
+DEBUG=true" spellcheck="false"></textarea>
+  </div>
+</div>
+<div class="btn-row">
+  <button class="primary" id="check-btn" type="button">Check</button>
+  <button id="sample-btn" type="button">Sample</button>
+  <button id="clear-btn" type="button">Clear</button>
+</div>
+<div id="error-box"></div>
+
+<div class="results" id="results">
+  <div class="summary-grid" id="summary"></div>
+
+  <div class="section" id="missing-section">
+    <h2>Missing in .env</h2>
+    <ul class="issue-list" id="missing-list"></ul>
+  </div>
+
+  <div class="section" id="extra-section">
+    <h2>Extra in .env (not in example)</h2>
+    <ul class="issue-list" id="extra-list"></ul>
+  </div>
+
+  <div class="section" id="leaks-section">
+    <h2>Possible leaked secrets in .env.example</h2>
+    <ul class="issue-list" id="leaks-list"></ul>
+  </div>
+
+  <div class="section" id="placeholders-section">
+    <h2>Placeholder values in .env</h2>
+    <ul class="issue-list" id="placeholders-list"></ul>
+  </div>
+</div>
+
+<footer>
+  <div>Env Var Checker. MIT licensed. <a href="https://github.com/0xelitesystem/env-var-checker" target="_blank" rel="noopener">View source</a>.</div>
+  <div>Browser-based. Files stay on your device.</div>
+</footer>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const themeBtn = $("theme-toggle");
+function setTheme(t) {
+  document.documentElement.setAttribute("data-theme", t);
+  themeBtn.textContent = t === "dark" ? "Light" : "Dark";
+}
+themeBtn.addEventListener("click", () => {
+  const cur = document.documentElement.getAttribute("data-theme") || "dark";
+  setTheme(cur === "dark" ? "light" : "dark");
+});
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function parseEnv(text) {
+  const out = {};
+  const lines = text.split("\n");
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line || line.startsWith("#")) continue;
+    const m = line.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/);
+    if (!m) continue;
+    let val = m[2];
+    // Strip surrounding quotes
+    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+      val = val.slice(1, -1);
+    }
+    out[m[1]] = val;
+  }
+  return out;
+}
+
+const PLACEHOLDER_PATTERNS = [
+  /^your[\-_].*here$/i,
+  /^your[\-_]/i,
+  /^my[\-_]/i,
+  /^example/i,
+  /^placeholder/i,
+  /^test[\-_]?\d*$/i,
+  /^changeme$/i,
+  /^xxx+$/i,
+  /^\.\.\.$/,
+  /^todo$/i,
+  /^fixme$/i,
+  /^<.+>$/,
+  /^\$\{.+\}$/,
+  /^secret$/i,
+  /^password$/i,
+  /^abc+/i,
+  /^foo$/i,
+  /^bar$/i,
+];
+
+const REAL_SECRET_PATTERNS = [
+  { name: "Anthropic API key", re: /^sk-ant-[A-Za-z0-9_-]{20,}/ },
+  { name: "OpenAI API key", re: /^sk-(?!ant-)[A-Za-z0-9_-]{30,}/ },
+  { name: "GitHub PAT", re: /^ghp_[A-Za-z0-9]{36}$|^github_pat_[A-Za-z0-9_]{82}$/ },
+  { name: "GitHub OAuth token", re: /^gho_[A-Za-z0-9]{36}$/ },
+  { name: "Stripe live key", re: /^sk_live_[A-Za-z0-9]{24,}/ },
+  { name: "Stripe restricted key", re: /^rk_live_[A-Za-z0-9]{24,}/ },
+  { name: "AWS access key", re: /^AKIA[0-9A-Z]{16}$/ },
+  { name: "AWS secret key shape", re: /^[A-Za-z0-9/+=]{40}$/, contextRe: /AWS|SECRET|KEY/i },
+  { name: "Slack token", re: /^xox[abpr]-[A-Za-z0-9-]{10,}/ },
+  { name: "Google API key", re: /^AIza[0-9A-Za-z_-]{35}$/ },
+  { name: "JWT", re: /^eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/ },
+  { name: "Private key block", re: /-----BEGIN.*PRIVATE KEY-----/ },
+  { name: "MongoDB connection w/ password", re: /mongodb(\+srv)?:\/\/[^:]+:[^@]+@/, requireNonPlaceholderPassword: true },
+  { name: "Postgres connection w/ password", re: /postgres(ql)?:\/\/[^:]+:[^@]+@/, requireNonPlaceholderPassword: true },
+];
+
+function isPlaceholder(value) {
+  if (!value) return true;
+  return PLACEHOLDER_PATTERNS.some(p => p.test(value.trim()));
+}
+
+function looksLikeRealSecret(key, value) {
+  if (!value) return null;
+  if (isPlaceholder(value)) return null;
+  for (const pat of REAL_SECRET_PATTERNS) {
+    if (pat.contextRe && !pat.contextRe.test(key)) continue;
+    if (pat.re.test(value)) {
+      if (pat.requireNonPlaceholderPassword) {
+        // Check that the password portion isn't a placeholder
+        const pwMatch = value.match(/:([^:@/]+)@/);
+        if (pwMatch && isPlaceholder(pwMatch[1])) return null;
+      }
+      return pat.name;
+    }
+  }
+  // Generic high-entropy detection for keys that suggest secrets
+  if (/key|secret|token|password|credential/i.test(key)) {
+    if (value.length >= 32 && /^[A-Za-z0-9_+\/=-]+$/.test(value) && !isPlaceholder(value)) {
+      return "high-entropy string in secret-shaped variable";
+    }
+  }
+  return null;
+}
+
+function check() {
+  $("error-box").innerHTML = "";
+  const exampleText = $("example-input").value;
+  const actualText = $("actual-input").value;
+  if (!exampleText.trim() && !actualText.trim()) {
+    $("error-box").innerHTML = `<div class="error-msg">Paste at least one of the files.</div>`;
+    $("results").classList.remove("show");
+    return;
+  }
+
+  const example = parseEnv(exampleText);
+  const actual = parseEnv(actualText);
+
+  const exampleKeys = new Set(Object.keys(example));
+  const actualKeys = new Set(Object.keys(actual));
+
+  const missing = [...exampleKeys].filter(k => !actualKeys.has(k));
+  const extra = [...actualKeys].filter(k => !exampleKeys.has(k));
+
+  // Detect leaked secrets in example
+  const leaks = [];
+  for (const [k, v] of Object.entries(example)) {
+    const detected = looksLikeRealSecret(k, v);
+    if (detected) leaks.push({ key: k, value: v, type: detected });
+  }
+
+  // Detect placeholder values in actual
+  const placeholders = [];
+  for (const [k, v] of Object.entries(actual)) {
+    if (isPlaceholder(v) && /key|secret|token|password|url|host|database/i.test(k)) {
+      placeholders.push({ key: k, value: v });
+    }
+  }
+
+  // Render summary
+  $("summary").innerHTML = `
+    <div class="summary-cell"><div class="summary-num">${exampleKeys.size}</div><div class="summary-label">in .env.example</div></div>
+    <div class="summary-cell"><div class="summary-num">${actualKeys.size}</div><div class="summary-label">in .env</div></div>
+    <div class="summary-cell ${missing.length > 0 ? "fail" : "zero"}"><div class="summary-num">${missing.length}</div><div class="summary-label">missing in .env</div></div>
+    <div class="summary-cell ${extra.length > 0 ? "warn" : "zero"}"><div class="summary-num">${extra.length}</div><div class="summary-label">undocumented in .env</div></div>
+    <div class="summary-cell ${leaks.length > 0 ? "fail" : "zero"}"><div class="summary-num">${leaks.length}</div><div class="summary-label">possible leaks</div></div>
+  `;
+
+  // Missing
+  if (missing.length === 0) {
+    $("missing-list").innerHTML = `<li class="ok"><span class="issue-tag">ok</span><div class="issue-content">All variables from .env.example are defined.</div></li>`;
+  } else {
+    $("missing-list").innerHTML = missing.map(k => `
+      <li class="fail">
+        <span class="issue-tag">fail</span>
+        <div class="issue-content">
+          <div class="issue-key">${escapeHtml(k)}</div>
+          <div class="issue-msg">Example value: <code>${escapeHtml(example[k] || "(empty)")}</code></div>
+        </div>
+      </li>
+    `).join("");
+  }
+
+  // Extra
+  if (extra.length === 0) {
+    $("extra-list").innerHTML = `<li class="ok"><span class="issue-tag">ok</span><div class="issue-content">No extra variables.</div></li>`;
+  } else {
+    $("extra-list").innerHTML = extra.map(k => `
+      <li class="warn">
+        <span class="issue-tag">warn</span>
+        <div class="issue-content">
+          <div class="issue-key">${escapeHtml(k)}</div>
+          <div class="issue-msg">Add to .env.example with a placeholder value, or remove if unused.</div>
+        </div>
+      </li>
+    `).join("");
+  }
+
+  // Leaks
+  if (leaks.length === 0) {
+    $("leaks-list").innerHTML = `<li class="ok"><span class="issue-tag">ok</span><div class="issue-content">No real-secret-shaped values detected in .env.example.</div></li>`;
+  } else {
+    $("leaks-list").innerHTML = leaks.map(l => `
+      <li class="fail">
+        <span class="issue-tag">leak</span>
+        <div class="issue-content">
+          <div class="issue-key">${escapeHtml(l.key)}</div>
+          <div class="issue-msg">Looks like ${escapeHtml(l.type)}. Replace with a placeholder before committing. If already committed, rotate the credential.</div>
+        </div>
+      </li>
+    `).join("");
+  }
+
+  // Placeholders
+  if (placeholders.length === 0) {
+    $("placeholders-list").innerHTML = `<li class="ok"><span class="issue-tag">ok</span><div class="issue-content">No placeholder values in .env.</div></li>`;
+  } else {
+    $("placeholders-list").innerHTML = placeholders.map(p => `
+      <li class="warn">
+        <span class="issue-tag">warn</span>
+        <div class="issue-content">
+          <div class="issue-key">${escapeHtml(p.key)}</div>
+          <div class="issue-msg">Value <code>${escapeHtml(p.value)}</code> looks like a placeholder. Did you forget to set this?</div>
+        </div>
+      </li>
+    `).join("");
+  }
+
+  $("results").classList.add("show");
+}
+
+$("check-btn").addEventListener("click", check);
+
+$("clear-btn").addEventListener("click", () => {
+  $("example-input").value = "";
+  $("actual-input").value = "";
+  $("results").classList.remove("show");
+  $("error-box").innerHTML = "";
+});
+
+$("sample-btn").addEventListener("click", () => {
+  $("example-input").value = `# Database
+DATABASE_URL=postgres://user:password@localhost:5432/myapp
+
+# API keys
+ANTHROPIC_API_KEY=sk-ant-real-leaked-key-here-fake-example-1234567890abcdef
+STRIPE_KEY=your-stripe-key-here
+
+# Settings
+LOG_LEVEL=info
+PORT=3000`;
+  $("actual-input").value = `DATABASE_URL=postgres://app:realPassword@db.prod:5432/myapp
+ANTHROPIC_API_KEY=your-key-here
+LOG_LEVEL=debug
+PORT=3000
+DEBUG=true
+INTERNAL_API_TOKEN=ghp_aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789`;
+});
+
+setTheme("dark");
+</script>
+</body>
+</html>
