@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -292,6 +292,35 @@ footer a:hover { text-decoration: underline; }
 </style>
 <link rel="canonical" href="https://0xelitesystem.github.io/env-var-checker/">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Env Var Checker","applicationCategory":"DeveloperApplication","operatingSystem":"Any (browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://0xelitesystem.github.io/env-var-checker/","author":{"@type":"Person","name":"0xelitesystem","url":"https://elitesystem.ai"}}</script>
+<style>
+/* elitesystem brand tokens: chrome only, meaning preserved */
+:root, :root[data-theme="dark"] {
+  --amber: #ffb454;
+  --bg: #0a0a0a;
+  --code-bg: #111110;
+  --fail: #ff6450;
+  --ink: #e8e8e3;
+  --ink-soft: #a8a8a3;
+  --panel: #111110;
+  --panel-2: #161614;
+  --pass: #7ddc7d;
+  --rule: #1f1f1d;
+}
+:root[data-theme="light"] {
+  --amber: #a05a00;
+  --bg: #e8ebef;
+  --code-bg: #dee2e8;
+  --fail: #b8341a;
+  --ink: #0a0a0a;
+  --ink-soft: #2a2a27;
+  --panel: #dee2e8;
+  --panel-2: #d3d7df;
+  --pass: #1a5c2e;
+  --rule: #c8cdd5;
+}
+:root { color-scheme: dark; }
+:root[data-theme="light"] { color-scheme: light; }
+</style>
 </head>
 <body>
 <div class="wrap">
