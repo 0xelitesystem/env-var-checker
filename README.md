@@ -36,7 +36,7 @@ You get:
 
 `your-...-here`, `xxx`, `<...>`, `${...}`, `changeme`, `example`, `placeholder`, `todo`, `fixme`, `foo`, `bar`, etc.
 
-## Why
+## Why this exists
 
 Two common vibe-coding failures:
 
@@ -54,6 +54,8 @@ This tool catches both classes before you push.
 ## Privacy
 
 All parsing is local. No upload, no analytics, no third-party scripts. The values you paste never leave the browser.
+
+If you use the theme toggle, your light or dark choice is saved in your browser's localStorage under the key `theme`. Nothing you paste or type is stored.
 
 ## If you find a leaked secret
 
